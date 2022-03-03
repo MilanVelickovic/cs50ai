@@ -2,8 +2,10 @@
 Tic Tac Toe Player
 """
 
+from cmath import inf
 import copy
 import math
+from random import randint
 
 X = "X"
 O = "O"
@@ -75,8 +77,8 @@ def winner(board):
             return row[0]
 
     # Cheking diagonals
-    diagonalR = [board[0][0], board[1][1], board[2][2]]
-    diagonalL = [board[0][2], board[1][1], board[2][0]]
+    diagonalR = [board[0][0], board[1][1], board[2][2]] # diagonal \
+    diagonalL = [board[0][2], board[1][1], board[2][0]] # diagonal /
 
     if all(value == diagonalR[0] for value in diagonalR):
         return diagonalR[0]
@@ -119,44 +121,56 @@ def minimax(board):
     Returns the optimal action for the current player on the board.
     """
     if not terminal(board):
-        turn = player(board)
-        if turn == X:
-            score, move = maximize(board)
-            return move
+        possible_actions = list(actions(board))
+        if len(possible_actions) == 9:
+            return possible_actions[randint(0, 8)]
         else:
-            score, move = minimize(board)
-            return move
+            turn = player(board)
+            alpha = -math.inf # max
+            beta = math.inf # min
+            if turn == X:
+                best_move, value = maximize(board, alpha, beta)
+                return best_move
+            else:
+                best_move, value = minimize(board, alpha, beta)
+                return best_move
     
     return None    
 
 
-def minimize(board):
+def maximize(board, alpha, beta):
     if terminal(board):
-        return utility(board), None
+        return (None, utility(board))
     else:
-        value = math.inf
-        move = None
-        possible_actions = actions(board)
-        for action in possible_actions:
-            score, act = maximize(result(board, action))
-            if score < value:
-                value = score
-                move = action
-        
-        return value, move
+        current_best_move = None
+        current_best_value = -math.inf
+        for action in actions(board):
+            move, value = minimize(result(board, action), alpha, beta)
+            alpha = max(alpha, value)
+            if value > current_best_value:
+                current_best_value = value
+                current_best_move = action
+
+            if alpha >= beta:
+                break
+
+        return (current_best_move, current_best_value)
 
 
-def maximize(board):
+def minimize(board, alpha, beta):
     if terminal(board):
-        return utility(board), None
+        return (None, utility(board))
     else:
-        value = -math.inf
-        move = None
-        possible_actions = actions(board)
-        for action in possible_actions:
-            score, act = minimize(result(board, action))
-            if score > value:
-                value = score
-                move = action
-    
-        return value, move
+        current_best_move = None
+        current_best_value = math.inf
+        for action in actions(board):
+            move, value = maximize(result(board, action), alpha, beta)
+            beta = min(beta, value)
+            if value < current_best_value:
+                current_best_value = value
+                current_best_move = action
+                
+            if alpha >= beta:
+                break
+
+        return (current_best_move, current_best_value)
